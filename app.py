@@ -1,30 +1,70 @@
-import sqlite3
+# import sqlite3
+# from flask import Flask, render_template, request, url_for, flash, redirect
+# from werkzeug.exceptions import abort
+# from datetime import datetime
+# from init_db import do_init
+
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from flask import Flask, render_template, request, url_for, flash, redirect
-from werkzeug.exceptions import abort
-from datetime import datetime
-from init_db import do_init
+from config import config
+import json
 
 
-def get_db_connection():
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    return conn
-
-#
+# def get_db_connection():
+#     conn = sqlite3.connect('database.db')
+#     conn.row_factory = sqlite3.Row
+#     return conn
 
 
-def get_post(post_id):
-    conn = get_db_connection()
-    post = conn.execute('SELECT * FROM posts WHERE id = ?',
-                        (post_id,)).fetchone()
-    conn.close()
-    if post is None:
-        abort(404)
-    return post
 
+# def get_post(post_id):
+#     conn = get_db_connection()
+#     post = conn.execute('SELECT * FROM posts WHERE id = ?',
+#                         (post_id,)).fetchone()
+#     conn.close()
+#     if post is None:
+#         abort(404)
+#     return post
+
+
+def db_get_posts_by_id(id):
+    con = None
+    try:
+        con = psycopg2.connect(**config())
+        cursor = con.cursor(cursor_factory=RealDictCursor)
+        SQL = 'SELECT * FROM posts where id = %s;'
+        cursor.execute(SQL, (id,))
+        row = cursor.fetchone()
+        cursor.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if con is not None:
+            con.close()
+
+print(db_get_posts_by_id(id))
+
+def query_posts():
+    con = None
+    try:
+        con = psycopg2.connect(**config())
+        cursor = con.cursor()
+        SQL = 'SELECT *FROM posts;'
+        cursor.execute(SQL)
+        row = cursor.fetchone()
+        print(row)
+        cursor.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if con is not None:
+            con.close()
+
+# print(query_posts())
 
 app = Flask(__name__)
-do_init()
+# do_init()
 app.config['SECRET_KEY'] = 'do_not_touch_or_you_will_be_fired'
 
 
@@ -39,16 +79,37 @@ app.config['SECRET_KEY'] = 'do_not_touch_or_you_will_be_fired'
 # this index() gets executed on the front page where all the posts are
 @app.route('/')
 def index():
-    conn = get_db_connection()
-    posts = conn.execute('SELECT * FROM posts').fetchall()
-    conn.close()
+    con = psycopg2.connect(**config())
+    cursor = con.cursor()
+    posts = cursor.execute('SELECT * FROM posts').fetchall()
+    cursor.close()
 # we need to iterate over all posts and format their date accordingly
     dictrows = [dict(row) for row in posts]
-    for post in dictrows:
-        # using our custom format_date(...)
-        post['created'] = post['created']
+    print(dictrows)
     return render_template('index.html', posts=posts)
 
+index()
+
+
+def hae_kaikki_taulun_rivit():
+    con = None
+    try:
+        con = psycopg2.connect(**config())
+        cursor = con.cursor()
+        SQL = 'SELECT * FROM posts;'
+        cursor.execute(SQL)
+        row = cursor.fetchall()
+        for rivi in row:
+            print(f'{rivi})')
+        cursor.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if con is not None:
+            con.close()
+
+
+print(hae_kaikki_taulun_rivit())
 
 # here we get a single post and return it to the browser
 @app.route('/<int:post_id>')
