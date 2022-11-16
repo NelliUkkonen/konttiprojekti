@@ -43,7 +43,7 @@ def db_get_posts_by_id(id):
         if con is not None:
             con.close()
 
-print(db_get_posts_by_id(id))
+# print(db_get_posts_by_id(id))
 
 def query_posts():
     con = None
@@ -81,35 +81,26 @@ app.config['SECRET_KEY'] = 'do_not_touch_or_you_will_be_fired'
 def index():
     con = psycopg2.connect(**config())
     cursor = con.cursor()
-    posts = cursor.execute('SELECT * FROM posts').fetchall()
-    cursor.close()
-# we need to iterate over all posts and format their date accordingly
-    dictrows = [dict(row) for row in posts]
-    print(dictrows)
-    return render_template('index.html', posts=posts)
+    SQL = 'SELECT * FROM posts'
+    cursor.execute(SQL) 
+    columns = list(cursor.description)
+    posts = cursor.fetchall()
+    results = []
+    for row in posts:
+        row_dict = {}
+        for i, col in enumerate(columns):
+            row_dict[col.name] = row[i]
+        results.append(row_dict)
+    # print(results)
+# display
 
-index()
+#     cursor.close()
+# # we need to iterate over all posts and format their date accordingl
+#     # for post in dictrows:
+#     #     # using our custom format_date(...)
+#     #     post['created'] = post['created']
+    return render_template('index.html', posts=results)
 
-
-def hae_kaikki_taulun_rivit():
-    con = None
-    try:
-        con = psycopg2.connect(**config())
-        cursor = con.cursor()
-        SQL = 'SELECT * FROM posts;'
-        cursor.execute(SQL)
-        row = cursor.fetchall()
-        for rivi in row:
-            print(f'{rivi})')
-        cursor.close()
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-    finally:
-        if con is not None:
-            con.close()
-
-
-print(hae_kaikki_taulun_rivit())
 
 # here we get a single post and return it to the browser
 @app.route('/<int:post_id>')
