@@ -30,10 +30,10 @@ app.config['SECRET_KEY'] = 'do_not_touch_or_you_will_be_fired'
 
 # this function is used to format date to a finnish time format from database format
 # e.g. 2021-07-20 10:36:36 is formateed to 20.07.2021 klo 10:36
-def format_date(post_date):
-    isodate = post_date.replace(' ', 'T')
-    newdate = datetime.fromisoformat(isodate)
-    return newdate.strftime('%d.%m.%Y') + ' klo ' + newdate.strftime('%H:%M')
+# def format_date(post_date):
+#     isodate = post_date.replace(' ', 'T')
+#     newdate = datetime.fromisoformat(isodate)
+#     return newdate.strftime('%d.%m.%Y') + ' klo ' + newdate.strftime('%H:%M')
 
 
 # this index() gets executed on the front page where all the posts are
@@ -42,12 +42,12 @@ def index():
     conn = get_db_connection()
     posts = conn.execute('SELECT * FROM posts').fetchall()
     conn.close()
-    # we need to iterate over all posts and format their date accordingly
+# we need to iterate over all posts and format their date accordingly
     dictrows = [dict(row) for row in posts]
     for post in dictrows:
         # using our custom format_date(...)
-        post['created'] = format_date(post['created'])
-    return render_template('index.html', posts=dictrows)
+        post['created'] = post['created']
+    return render_template('index.html', posts=posts)
 
 
 # here we get a single post and return it to the browser
@@ -100,11 +100,11 @@ def edit(id):
 
 
 # Here we delete a SINGLE post.
-@app.route('/<int:id>/delete', methods=('POST',))
+@app.route('/<int:id>/delete', methods=('POST', 'DELETE'))
 def delete(id):
     post = get_post(id)
     conn = get_db_connection()
-    conn.execute('DELETE FROM posts')
+    conn.execute('DELETE FROM posts WHERE id = ?', (id,))
     conn.commit()
     conn.close()
     flash('"{}" was successfully deleted!'.format(post['title']))
