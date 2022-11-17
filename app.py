@@ -28,7 +28,7 @@ import json
 #     return post
 
 
-def db_get_posts_by_id(id):
+def get_post(id):
     con = None
     try:
         con = psycopg2.connect(**config())
@@ -37,13 +37,12 @@ def db_get_posts_by_id(id):
         cursor.execute(SQL, (id,))
         row = cursor.fetchone()
         cursor.close()
+        return row
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
     finally:
         if con is not None:
             con.close()
-
-# print(db_get_posts_by_id(id))
 
 def query_posts():
     con = None
@@ -105,8 +104,9 @@ def index():
 # here we get a single post and return it to the browser
 @app.route('/<int:post_id>')
 def post(post_id):
-    post = dict(get_post(post_id))
+    post = get_post(post_id)
     return render_template('post.html', post=post)
+
 
 
 # here we create a new post
@@ -119,11 +119,12 @@ def create():
         if not title:
             flash('Title is required!')
         else:
-            conn = get_db_connection()
-            conn.execute('INSERT INTO posts (title, content) VALUES (?, ?)',
-                         (title, content))
-            conn.commit()
-            conn.close()
+            con = psycopg2.connect(**config())
+            cursor = con.cursor(cursor_factory=RealDictCursor)
+            SQL = 'INSERT INTO posts (title, content) VALUES (%s, %s);'
+            cursor.execute(SQL, (title, content))
+            con.commit()
+            cursor.close()
             return redirect(url_for('index'))
 
     return render_template('create.html')
@@ -140,12 +141,12 @@ def edit(id):
         if not title:
             flash('Title is required!')
         else:
-            conn = get_db_connection()
-            conn.execute('UPDATE posts SET title = ?, content = ?'
-                         ' WHERE id = ?',
-                         (title, content, id))
-            conn.commit()
-            conn.close()
+            con = psycopg2.connect(**config())
+            cursor = con.cursor(cursor_factory=RealDictCursor)
+            SQL = 'UPDATE posts SET title = %s, content = %s  WHERE id = %s;'
+            cursor.execute(SQL, (title, content, id))
+            con.commit()
+            cursor.close()
             return redirect(url_for('index'))
 
     return render_template('edit.html', post=post)
@@ -155,9 +156,13 @@ def edit(id):
 @app.route('/<int:id>/delete', methods=('POST', 'DELETE'))
 def delete(id):
     post = get_post(id)
-    conn = get_db_connection()
-    conn.execute('DELETE FROM posts WHERE id = ?', (id,))
-    conn.commit()
-    conn.close()
+    con = psycopg2.connect(**config())
+    cursor = con.cursor(cursor_factory=RealDictCursor)
+    SQL = 'DELETE FROM posts where id = %s;'
+    cursor.execute(SQL, (id,))
+    con.commit()
+    cursor.close()
     flash('"{}" was successfully deleted!'.format(post['title']))
     return redirect(url_for('index'))
+
+
