@@ -1,0 +1,30 @@
+cat << EOF > createcluster.yaml
+---
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: Ryhma2-eksclt
+  region: eu-west-1
+  version: "1.21"
+
+availabilityZones: ["eu-west-1a", "eu-west-1b"]
+
+managedNodeGroups:
+- name: nodegroup
+  desiredCapacity: 2
+  instanceType: t2.micro
+  ssh:
+    enableSsm: true
+
+# To enable all of the control plane logs, uncomment below:
+# cloudWatch:
+#  clusterLogging:
+#    enableTypes: ["*"]
+
+secretsEncryption:
+  keyARN: arn:aws:kms:eu-west-1:341014156608:key/47528fe3-04f8-4866-85e3-d146a268245c
+EOF
+
+#Luodaan klusteri näillä tiedoilla
+#create cluster

@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: Ryhma2
+  labels:
+    app: Ryhma2
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: Ryhma2
+  # strategy:
+  #   rollingUpdate:
+  #     maxSurge: 25%
+  #     maxUnavailable: 25%
+  #   type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: Ryhma2
+    spec:
+      containers:
+      - image: public.ecr.aws/l7f7h3x5/ryhma2-ecr:latest
+        imagePullPolicy: Always
+        name: Ryhma2-image-URI
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+
+
+
+#Mikä on deploymentin tarkoitus?
+worker nodet ja podin ja deploya nää
